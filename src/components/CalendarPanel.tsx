@@ -76,7 +76,7 @@ export function CalendarPanel({ initialRadar }: CalendarPanelProps) {
     return (
       <div className="calendar-compact">
         <span className="calendar-compact-k">Next red folder</span>
-        <span className="calendar-compact-v">
+        <span className="calendar-compact-v" suppressHydrationWarning>
           {next.title} · {formatCountdownHuman(ms)}
         </span>
       </div>
@@ -88,13 +88,16 @@ export function CalendarPanel({ initialRadar }: CalendarPanelProps) {
     : upcoming.slice(0, 3);
 
   return (
-    <ul className="calendar-list calendar-list--dense">
+    <ul
+      className="calendar-list calendar-list--dense"
+      aria-label={today ? "Red folder today" : "Upcoming red folder"}
+    >
       {show.map((e) => {
         const eventMs = new Date(e.scheduledAt).getTime() - ts;
         return (
           <li key={`${e.title}-${e.scheduledAt}`} className="calendar-row">
             <span className="calendar-row-title">{e.title}</span>
-            <span className="calendar-row-meta">
+            <span className="calendar-row-meta" suppressHydrationWarning>
               {formatCountdownHuman(eventMs)} · {e.timeEt} ET
             </span>
           </li>

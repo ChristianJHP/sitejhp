@@ -75,7 +75,7 @@ export function InstrumentBiasSummary({
 
   const refreshMeta = formatRefreshMeta(
     data?.generatedAt,
-    now ?? Date.now(),
+    now,
     revalidateMs(data)
   );
 
@@ -130,21 +130,27 @@ export function InstrumentBiasSummary({
               </dd>
             </div>
             <div className="trade-map-item">
-              <dt>Key level</dt>
-              <dd>{map.keyLevel}</dd>
+              <dt>Confidence</dt>
+              <dd
+                className={`trade-map-conf trade-map-conf--${map.confidence.toLowerCase()}`}
+              >
+                {map.confidence}
+              </dd>
             </div>
             <div className="trade-map-item">
-              <dt>Draw</dt>
-              <dd>{map.draw}</dd>
+              <dt>Key level</dt>
+              <dd>{map.keyLevel}</dd>
             </div>
             <div className="trade-map-item">
               <dt>Invalidation</dt>
               <dd>{map.invalidation}</dd>
             </div>
-            <div className="trade-map-item">
-              <dt>Confidence</dt>
-              <dd>{map.confidence}</dd>
-            </div>
+            {map.draw && map.draw !== "—" ? (
+              <div className="trade-map-item trade-map-item--draw">
+                <dt>Draw</dt>
+                <dd>{map.draw}</dd>
+              </div>
+            ) : null}
           </dl>
         </div>
       ) : (

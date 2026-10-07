@@ -128,6 +128,7 @@ export function MarketRadar({ initialData }: MarketRadarProps) {
                   <span className="live-pulse-dot" aria-hidden />
                 ) : null}
                 <span
+                  suppressHydrationWarning
                   className={
                     tradingSession.isMarketOpen
                       ? "mr-session mr-session--open"

@@ -1822,15 +1822,18 @@
     color: var(--foreground);
   }
 
-  .trade-map-val--bull {
+  .trade-map-val--bull,
+  .trade-map-item dd.trade-map-val--bull {
     color: #6bd68c;
   }
 
-  .trade-map-val--bear {
+  .trade-map-val--bear,
+  .trade-map-item dd.trade-map-val--bear {
     color: #f2555a;
   }
 
-  .trade-map-val--mixed {
+  .trade-map-val--mixed,
+  .trade-map-item dd.trade-map-val--mixed {
     color: #94a3b8;
   }
 
@@ -3772,6 +3775,374 @@
     .sym-col-price--tick,
     .bias-summary--refreshing .bias-summary-timing {
       animation: none;
+    }
+  }
+
+
+  /* ── Clarity (all widths) ─────────────────────────────────────────── */
+
+  .trade-map-item dd.trade-map-conf--high {
+    color: #6bd68c;
+  }
+
+  .trade-map-item dd.trade-map-conf--medium {
+    color: #f0c674;
+  }
+
+  .trade-map-item dd.trade-map-conf--low {
+    color: #94a3b8;
+  }
+
+  @media (min-width: 520px) {
+    .trade-map-grid {
+      grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    }
+  }
+
+  /* Active overlays read as "on" at a glance */
+  .chart-overlay-toggle--on,
+  .chart-overlay-toggle--on.chart-overlay-toggle--draw,
+  .chart-overlay-toggle--on.chart-overlay-toggle--fvg,
+  .chart-overlay-toggle--on.chart-overlay-toggle--rejection,
+  .chart-overlay-toggle--on.chart-overlay-toggle--session,
+  .chart-overlay-toggle--on.chart-overlay-toggle--cisd,
+  .chart-overlay-toggle--on.chart-overlay-toggle--levels {
+    color: #e2e8f0;
+    border-color: rgba(96, 165, 250, 0.55);
+    background: rgba(96, 165, 250, 0.12);
+  }
+
+  /* Single-timeframe desktop chart fills the column */
+  .sym-col--wide .sym-col-charts-wide > .sym-chart-pane:only-child .mini-chart-canvas {
+    height: clamp(20rem, 42vh, 30rem);
+    min-height: 20rem;
+  }
+
+  .mr-tab,
+  .mr-tf-tab,
+  .chart-overlay-toggle,
+  .mr-alert-settings-btn,
+  .news-feed-more {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Phone layout ─────────────────────────────────────────────────── */
+
+  @media (max-width: 639px) {
+    /* Header: flatten into a clear grid
+       [title ........ clock ]
+       [session ...... alerts]
+       [red folder card      ]
+       [candle closes        ] */
+    .mr-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-areas:
+        "back    back"
+        "title   clock"
+        "session alerts"
+        "cal     cal"
+        "timers  timers";
+      align-items: center;
+      gap: 0.5rem 0.75rem;
+      padding: 0 0 0.25rem;
+    }
+
+    .mr-header-main,
+    .mr-header-row,
+    .mr-header-actions,
+    .mr-header-notify-row {
+      display: contents;
+    }
+
+    .mr-back {
+      grid-area: back;
+      margin: 0;
+      font-size: 0.75rem;
+      padding: 0.25rem 0;
+      justify-self: start;
+    }
+
+    .mr-title {
+      grid-area: title;
+      font-size: 1.375rem;
+    }
+
+    .mr-clock {
+      grid-area: clock;
+      font-size: 0.875rem;
+      justify-self: end;
+    }
+
+    .mr-session-wrap {
+      grid-area: session;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .mr-session {
+      font-size: 0.8125rem;
+      padding: 0.25rem 0.5625rem;
+    }
+
+    .mr-session-countdown {
+      font-size: 0.75rem;
+    }
+
+    .mr-alert-settings-btn {
+      grid-area: alerts;
+      justify-self: end;
+      min-height: 2.5rem;
+      padding: 0.375rem 0.875rem;
+      font-size: 0.75rem;
+      border-radius: 8px;
+    }
+
+    .mr-header-calendar {
+      grid-area: cal;
+      max-width: none;
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(242, 85, 90, 0.28);
+      background: rgba(242, 85, 90, 0.06);
+    }
+
+    .mr-header-calendar::before {
+      content: "Red folder";
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #f2555a;
+    }
+
+    .mr-header-calendar .calendar-list--dense {
+      padding: 0;
+      margin: 0;
+      border: none;
+      background: transparent;
+    }
+
+    .mr-header-calendar .calendar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.75rem;
+      padding: 0.25rem 0;
+    }
+
+    .mr-header-calendar .calendar-row-title {
+      font-size: 0.9375rem;
+      font-weight: 600;
+    }
+
+    .mr-header-calendar .calendar-row-meta,
+    .mr-header-calendar .calendar-compact-v {
+      font-size: 0.8125rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mr-header-calendar .calendar-compact-k {
+      display: none;
+    }
+
+    .candle-timer-strip {
+      grid-area: timers;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #12151c;
+    }
+
+    .candle-timer-strip-k {
+      font-size: 0.6875rem;
+    }
+
+    .candle-timer-strip-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .candle-timer-strip-item {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.0625rem;
+    }
+
+    .candle-timer-strip-label {
+      font-size: 0.6875rem;
+    }
+
+    .candle-timer-strip-val {
+      font-size: 0.875rem;
+    }
+
+    /* Symbol tabs stay reachable while scrolling */
+    .mr-tabs {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-radius: 10px 10px 0 0;
+      box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.6);
+    }
+
+    .mr-tab {
+      min-height: 2.875rem;
+      font-size: 0.9375rem;
+    }
+
+    .mr-board {
+      overflow: clip;
+    }
+
+    /* Trade map */
+    .bias-summary--trade-map .bias-summary-head {
+      flex-wrap: wrap;
+      gap: 0.25rem 0.75rem;
+    }
+
+    .trade-map-headline {
+      font-size: 1.0625rem;
+    }
+
+    .trade-map-context {
+      font-size: 0.875rem;
+    }
+
+    .trade-map-vol {
+      font-size: 0.8125rem;
+      padding: 0.5rem 0.625rem;
+    }
+
+    .trade-map-vol-tag {
+      display: block;
+      margin: 0 0 0.25rem;
+      font-size: 0.6875rem;
+    }
+
+    .trade-map-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.625rem 0.75rem;
+    }
+
+    .trade-map-item--draw {
+      grid-column: 1 / -1;
+    }
+
+    .trade-map-item dt {
+      font-size: 0.6875rem;
+    }
+
+    .trade-map-item dd {
+      font-size: 0.9375rem;
+    }
+
+    /* HTF dots + price */
+    .tf-dot-label {
+      font-size: 0.75rem;
+    }
+
+    .sym-col-price-glyph {
+      font-size: 0.6875rem;
+    }
+
+    /* Overlay chips: one swipeable row of real tap targets */
+    .chart-overlay-toggles {
+      gap: 0.375rem;
+      margin: 0 -0.875rem;
+      padding: 0.125rem 0.875rem 0.5rem;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .chart-overlay-toggles::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chart-overlay-toggle {
+      flex: 0 0 auto;
+      min-height: 2.75rem;
+      justify-content: center;
+      padding: 0.3125rem 0.625rem;
+      border-radius: 8px;
+      font-size: 0.6875rem;
+      scroll-snap-align: start;
+    }
+
+    .chart-overlay-toggle-v {
+      font-size: 0.75rem;
+    }
+
+    .sym-chart-pane-tf {
+      font-size: 0.6875rem;
+    }
+
+    /* News */
+    .news-feed-sub,
+    .news-feed-time,
+    .news-catalyst-k {
+      font-size: 0.6875rem;
+    }
+
+    .news-catalyst-impact {
+      font-size: 0.875rem;
+    }
+
+    .news-catalyst-line {
+      font-size: 0.8125rem;
+    }
+
+    .news-feed-row {
+      grid-template-areas:
+        "tags time"
+        "text text";
+      padding: 0.625rem 0.875rem;
+    }
+
+    .news-feed-tags {
+      grid-area: tags;
+    }
+
+    .news-feed-row .news-feed-text {
+      grid-area: text;
+    }
+
+    .news-feed-time {
+      grid-area: time;
+      align-self: center;
+    }
+
+    .news-feed-text {
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    .news-feed-tag,
+    .news-feed-topic {
+      font-size: 0.625rem;
+    }
+
+    .news-feed-more {
+      min-height: 2.75rem;
+      font-size: 0.8125rem;
+    }
+
+    .feedback-nudge {
+      display: inline-block;
+      padding: 0.625rem 0;
+      font-size: 0.8125rem;
     }
   }
 }

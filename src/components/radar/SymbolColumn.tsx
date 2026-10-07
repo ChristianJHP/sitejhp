@@ -81,7 +81,12 @@ export function SymbolColumn({
       />
 
       {isWide ? (
-        <div className="sym-col-charts-wide">
+        <div
+          className="sym-col-charts-wide"
+          style={{
+            gridTemplateColumns: `repeat(${CHART_TIMEFRAMES.length}, minmax(0, 1fr))`,
+          }}
+        >
           {CHART_TIMEFRAMES.map((tf) => (
             <SymbolChartPane
               key={tf}
@@ -96,20 +101,22 @@ export function SymbolColumn({
         </div>
       ) : (
         <>
-          <div className="mr-tf-tabs" role="tablist" aria-label="Chart timeframe">
-            {CHART_TIMEFRAMES.map((tf) => (
-              <button
-                key={tf}
-                type="button"
-                role="tab"
-                aria-selected={timeframe === tf}
-                className={`mr-tf-tab${timeframe === tf ? " mr-tf-tab--active" : ""}`}
-                onClick={() => setTimeframe(tf)}
-              >
-                {tf}
-              </button>
-            ))}
-          </div>
+          {CHART_TIMEFRAMES.length > 1 ? (
+            <div className="mr-tf-tabs" role="tablist" aria-label="Chart timeframe">
+              {CHART_TIMEFRAMES.map((tf) => (
+                <button
+                  key={tf}
+                  type="button"
+                  role="tab"
+                  aria-selected={timeframe === tf}
+                  className={`mr-tf-tab${timeframe === tf ? " mr-tf-tab--active" : ""}`}
+                  onClick={() => setTimeframe(tf)}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           <div className="sym-tf-stacks">
             {CHART_TIMEFRAMES.map((tf) => {
