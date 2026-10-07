@@ -1,6 +1,10 @@
 import type { ChartOverlayKey } from "@/lib/chart-overlay-types";
 import type { HtfBias, SymbolLabel } from "@/lib/strategy-prep";
 import type { InstrumentBiasContext } from "@/lib/instrument-bias-brief";
+import {
+  volatilityLabel,
+  type VolatilityRegime,
+} from "@/lib/session-volatility";
 
 export type Confidence = "Low" | "Medium" | "High";
 
@@ -26,6 +30,10 @@ export type InstrumentTradeMap = {
   confidence: Confidence;
   newsImpact: string;
   newsLine: string;
+  /** Expected session volatility regime (red folder + war flow). */
+  volatility: VolatilityRegime;
+  /** One-line read on volatility centered on red folder / war catalysts. */
+  volatilityNote: string;
   overlayHints: Partial<Record<ChartOverlayKey, OverlayHint>>;
   chartFocus: ChartFocusLevels;
 };
@@ -170,6 +178,12 @@ function deriveConfidence(ctx: InstrumentBiasContext): Confidence {
 
   if (ctx.topHeadlines.length > 0 && ctx.perceivedBias !== "mixed") score += 1;
 
+  // Structure is less reliable into a red folder release or under live war flow.
+  const phase = ctx.volatility.redFolder.phase;
+  if (phase === "imminent") score -= 2;
+  else if (phase === "anticipation") score -= 1;
+  if (ctx.volatility.war.intensity === "high") score -= 1;
+
   if (score >= 4) return "High";
   if (score >= 2) return "Medium";
   return "Low";
@@ -178,6 +192,20 @@ function deriveConfidence(ctx: InstrumentBiasContext): Confidence {
 function deriveNewsImpact(ctx: InstrumentBiasContext): string {
   const headlines = ctx.topHeadlines.join(" ").toLowerCase();
   const geo = `${ctx.geo.war} ${ctx.geo.trump ?? ""} ${ctx.geo.marketsTone}`.toLowerCase();
+  const war = ctx.volatility.war;
+  const warActive = war.intensity === "elevated" || war.intensity === "high";
+
+  if (warActive && war.tone === "escalation") {
+    return ctx.symbol === "GC"
+      ? "War escalation / gold-supportive"
+      : "War escalation / risk-off";
+  }
+  if (warActive && war.tone === "de-escalation") {
+    return ctx.symbol === "GC"
+      ? "De-escalation / gold headwind"
+      : "De-escalation / relief risk";
+  }
+  if (warActive) return "Two-way war headlines / whipsaw";
 
   if (ctx.symbol === "GC") {
     const goldPositive =
@@ -204,6 +232,11 @@ function deriveNewsImpact(ctx: InstrumentBiasContext): string {
 }
 
 function deriveNewsLine(ctx: InstrumentBiasContext): string {
+  const war = ctx.volatility.war;
+  if (war.intensity === "high" && war.headlines[0]) {
+    const h = war.headlines[0];
+    return h.length > 100 ? `${h.slice(0, 97).trim()}…` : h;
+  }
   if (ctx.topHeadlines[0]) {
     const h = ctx.topHeadlines[0];
     const short = h.length > 90 ? `${h.slice(0, 87).trim()}…` : h;
@@ -239,6 +272,40 @@ function buildHeadline(ctx: InstrumentBiasContext, keyLevel: string): string {
   return `${name} bias: ${bias} at ${keyLevel}.`;
 }
 
+function catalystSentence(ctx: InstrumentBiasContext): string {
+  const { redFolder, war } = ctx.volatility;
+  const ev = redFolder.next;
+  const evLabel = ev ? `${ev.title} ${ev.timeEt} ET` : "";
+  switch (redFolder.phase) {
+    case "imminent":
+      return `${evLabel} imminent — expect a two-sided spike before bias resolves.`;
+    case "anticipation":
+      return `Bias likely tested into ${evLabel}; pre-release range is the liquidity target.`;
+    case "today":
+      return `Session likely centers on ${evLabel} — expect expansion after the print.`;
+    default:
+      break;
+  }
+  if (war.intensity === "high" || war.intensity === "elevated") {
+    return war.tone === "escalation"
+      ? "War escalation flow can spike price through structure — size down."
+      : war.tone === "de-escalation"
+        ? "De-escalation headlines can squeeze price against the bias."
+        : "Two-way war headlines — expect whipsaw around levels.";
+  }
+  return "Anticipation into the next red folder may cap follow-through.";
+}
+
+function deriveVolatilityNote(ctx: InstrumentBiasContext): string {
+  const vol = ctx.volatility;
+  if (vol.regime === "calm") return vol.expectedBehavior;
+  const lead =
+    vol.redFolder.phase !== "none" && vol.redFolder.phase !== "later"
+      ? vol.redFolder.note
+      : vol.war.note;
+  return `${volatilityLabel(vol.regime)} vol: ${lead}`;
+}
+
 function buildContext(ctx: InstrumentBiasContext): string {
   if (!ctx.marketOpen) {
     return `Markets closed. Last ${formatPrice(ctx.price, ctx.symbol)} with ${ctx.htf.fourHour} 4H / ${ctx.htf.oneHour} 1H into reopen.`;
@@ -266,6 +333,11 @@ function buildContext(ctx: InstrumentBiasContext): string {
     parts.push(
       `Primary ${dir} draw is ${formatPrice(ctx.drawOnLiquidity.level, ctx.symbol)}.`
     );
+  }
+
+  const vol = ctx.volatility;
+  if (vol.regime !== "calm") {
+    return [...parts.slice(0, 2), catalystSentence(ctx)].join(" ");
   }
 
   const conf = deriveConfidence(ctx);
@@ -318,6 +390,8 @@ export function buildTradeMapFromContext(
     confidence: deriveConfidence(ctx),
     newsImpact: deriveNewsImpact(ctx),
     newsLine: deriveNewsLine(ctx),
+    volatility: ctx.volatility.regime,
+    volatilityNote: deriveVolatilityNote(ctx),
     overlayHints: buildOverlayHints(ctx, keyLevel),
     chartFocus: focus,
   };
@@ -328,7 +402,12 @@ export function mergeTradeMapWithAi(
   ai?: Partial<
     Pick<
       InstrumentTradeMap,
-      "headline" | "context" | "newsImpact" | "newsLine" | "invalidation"
+      | "headline"
+      | "context"
+      | "newsImpact"
+      | "newsLine"
+      | "invalidation"
+      | "volatilityNote"
     >
   > | null
 ): InstrumentTradeMap {
@@ -340,5 +419,6 @@ export function mergeTradeMapWithAi(
     newsImpact: ai.newsImpact?.trim() || base.newsImpact,
     newsLine: ai.newsLine?.trim() || base.newsLine,
     invalidation: ai.invalidation?.trim() || base.invalidation,
+    volatilityNote: ai.volatilityNote?.trim() || base.volatilityNote,
   };
 }

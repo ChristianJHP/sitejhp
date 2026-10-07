@@ -5,6 +5,7 @@ import { BIAS_SUMMARY_REVALIDATE_SEC } from "@/lib/bias-summary-config";
 import { BiasSummarySkeleton } from "@/components/radar/LiveSkeleton";
 import type { InstrumentSummaryPayload } from "@/hooks/use-instrument-bias-summary";
 import type { RadarTab } from "@/components/radar/MarketBoard";
+import type { VolatilityRegime } from "@/lib/session-volatility";
 
 function revalidateMs(data: InstrumentSummaryPayload | undefined): number {
   return (data?.revalidateSec ?? BIAS_SUMMARY_REVALIDATE_SEC) * 1000;
@@ -40,6 +41,12 @@ const SYMBOL_LABEL: Record<RadarTab, string> = {
   NQ: "NQ",
   ES: "ES",
   GC: "Gold",
+};
+
+const VOL_LABEL: Record<VolatilityRegime, string> = {
+  calm: "Calm",
+  elevated: "Elevated",
+  high: "High",
 };
 
 function biasClass(bias: string): string {
@@ -104,6 +111,16 @@ export function InstrumentBiasSummary({
         <div className="trade-map live-text-in" key={map.headline.slice(0, 20)}>
           <p className="trade-map-headline">{map.headline}</p>
           <p className="trade-map-context">{map.context}</p>
+          {map.volatilityNote ? (
+            <p
+              className={`trade-map-vol trade-map-vol--${map.volatility ?? "calm"}`}
+            >
+              <span className="trade-map-vol-tag">
+                Session vol · {VOL_LABEL[map.volatility ?? "calm"]}
+              </span>
+              {map.volatilityNote}
+            </p>
+          ) : null}
 
           <dl className="trade-map-grid">
             <div className="trade-map-item">
