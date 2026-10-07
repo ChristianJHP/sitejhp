@@ -217,7 +217,7 @@ export function computeWarVolatility(
   const fresh = freshestMinutesAgo != null && freshestMinutesAgo <= 90;
 
   let points = war.length + trump.length + critical + escalation;
-  if (fresh) points += 2;
+  if (fresh) points += 1;
 
   const intensity: WarIntensity =
     points >= 7 ? "high" : points >= 3 ? "elevated" : "low";
@@ -329,10 +329,4 @@ export function computeSessionVolatility(
   }
 
   return { regime, score, drivers, redFolder, war, expectedBehavior };
-}
-
-export function volatilityLabel(regime: VolatilityRegime): string {
-  if (regime === "high") return "High";
-  if (regime === "elevated") return "Elevated";
-  return "Calm";
 }

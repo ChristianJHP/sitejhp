@@ -1,10 +1,7 @@
 import type { ChartOverlayKey } from "@/lib/chart-overlay-types";
 import type { HtfBias, SymbolLabel } from "@/lib/strategy-prep";
 import type { InstrumentBiasContext } from "@/lib/instrument-bias-brief";
-import {
-  volatilityLabel,
-  type VolatilityRegime,
-} from "@/lib/session-volatility";
+import type { VolatilityRegime } from "@/lib/session-volatility";
 
 export type Confidence = "Low" | "Medium" | "High";
 
@@ -299,11 +296,9 @@ function catalystSentence(ctx: InstrumentBiasContext): string {
 function deriveVolatilityNote(ctx: InstrumentBiasContext): string {
   const vol = ctx.volatility;
   if (vol.regime === "calm") return vol.expectedBehavior;
-  const lead =
-    vol.redFolder.phase !== "none" && vol.redFolder.phase !== "later"
-      ? vol.redFolder.note
-      : vol.war.note;
-  return `${volatilityLabel(vol.regime)} vol: ${lead}`;
+  return vol.redFolder.phase !== "none" && vol.redFolder.phase !== "later"
+    ? vol.redFolder.note
+    : vol.war.note;
 }
 
 function buildContext(ctx: InstrumentBiasContext): string {
