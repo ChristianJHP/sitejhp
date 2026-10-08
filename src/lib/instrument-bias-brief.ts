@@ -39,6 +39,9 @@ import {
   type InstrumentTradeMap,
 } from "@/lib/instrument-trade-map";
 
+/** Cap on the AI refinement; context build is capped at 18s separately. */
+const AI_TIMEOUT_MS = 12_000;
+
 export type InstrumentBiasPayload = {
   line: string;
   symbol: SymbolLabel;
@@ -365,6 +368,11 @@ async function generateInstrumentBiasBrief(
       model,
       prompt: buildPrompt(ctx),
       maxOutputTokens: 380,
+      // Finish (AI or fallback) inside the route's cached-brief timeout so the
+      // result is always cached — otherwise a paid call is discarded and the
+      // next request pays for another.
+      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      maxRetries: 1,
     });
     const parsed = parseAiResponse(text);
     const tradeMap = mergeTradeMapWithAi(draft, parsed.tradeMapAi);
