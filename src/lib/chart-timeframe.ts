@@ -23,7 +23,7 @@ import { filterChartPlot } from "@/lib/market-analysis";
 
 export type ChartTimeframe = "5m" | "15m" | "1H" | "4H";
 
-export const CHART_TIMEFRAMES: ChartTimeframe[] = ["1H", "5m", "15m", "4H"];
+export const CHART_TIMEFRAMES: ChartTimeframe[] = ["15m"];
 
 type TfConfig = {
   interval: "5m" | "15m" | "60m";
@@ -201,62 +201,27 @@ export function plotForTimeframe(
 
   const { zones: fvgZones } = buildFvgPlot(symbol, timeframe);
   const lines: ChartPlotLine[] = [];
+  const zones = [...fvgZones];
 
   if (shouldShowDrawOnLiquidity(bias)) {
     lines.push(drawPlotLine(drawSide, drawLevel));
-  }
 
-  lines.push(
-    {
-      price: symbol.h4High,
-      color: "rgba(61, 214, 140, 0.55)",
-      style: "solid",
-      label: "4H H",
-      role: "level",
-    },
-    {
-      price: symbol.h4Low,
-      color: "rgba(242, 85, 90, 0.55)",
-      style: "solid",
-      label: "4H L",
-      role: "level",
-    }
-  );
-
-  if (Math.abs(symbol.priorH4High - symbol.h4High) >= 8) {
-    lines.push({
-      price: symbol.priorH4High,
-      color: "rgba(122, 132, 148, 0.45)",
-      style: "dashed",
-      label: "Pr H",
-      role: "level",
-    });
-  }
-  if (Math.abs(symbol.priorH4Low - symbol.h4Low) >= 8) {
-    lines.push({
-      price: symbol.priorH4Low,
-      color: "rgba(122, 132, 148, 0.45)",
-      style: "dashed",
-      label: "Pr L",
-      role: "level",
+    const rangeTop = Math.max(symbol.current, drawLevel);
+    const rangeBottom = Math.min(symbol.current, drawLevel);
+    // startTime far enough back to span the whole 15m chart window (1mo)
+    const rangeStart = Math.floor(Date.now() / 1000) - 86400 * 32;
+    zones.push({
+      top: rangeTop,
+      bottom: rangeBottom,
+      type: drawSide === "buy-side" ? "bullish" : "bearish",
+      timeframe: "1H",
+      kind: "draw-range",
+      label: drawSide === "buy-side" ? "Draw range ↑" : "Draw range ↓",
+      startTime: rangeStart,
     });
   }
 
-  const cisd = symbol.analysis.cisd;
-  if (cisd) {
-    lines.push({
-      price: cisd.price,
-      color:
-        cisd.type === "bullish"
-          ? "rgba(61, 214, 140, 0.75)"
-          : "rgba(242, 85, 90, 0.75)",
-      style: "solid",
-      label: "CISD",
-      role: "cisd",
-    });
-  }
-
-  return { lines, zones: fvgZones };
+  return { lines, zones };
 }
 
 /** Only the 2–3 levels that matter for the trade map — no ICT Christmas lights. */

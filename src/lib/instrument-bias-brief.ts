@@ -30,10 +30,17 @@ import {
 } from "@/lib/summary-chart-overlays";
 import type { ChartOverlaySettings } from "@/lib/chart-overlay-types";
 import {
+  computeSessionVolatility,
+  type SessionVolatilityContext,
+} from "@/lib/session-volatility";
+import {
   buildTradeMapFromContext,
   mergeTradeMapWithAi,
   type InstrumentTradeMap,
 } from "@/lib/instrument-trade-map";
+
+/** Cap on the AI refinement; context build is capped at 18s separately. */
+const AI_TIMEOUT_MS = 12_000;
 
 export type InstrumentBiasPayload = {
   line: string;
@@ -75,6 +82,7 @@ export type InstrumentBiasContext = {
   smt: string | null;
   topHeadlines: string[];
   geo: { war: string; trump: string | null; marketsTone: string };
+  volatility: SessionVolatilityContext;
   nextRedFolder: { title: string; minutesUntil: number } | null;
   minutesTo1HClose: number | null;
 };
@@ -103,6 +111,7 @@ async function quickGeoForContext() {
   const strings = formatGeopoliticsDeterministic(sources);
   const feed = buildMarketNewsFeed(sources);
   return {
+    sources,
     feed,
     war: strings.war,
     trump: strings.trump,
@@ -123,6 +132,7 @@ export async function buildInstrumentBiasContext(
     withTimeout(computeMarketContext(), 18_000, "market context"),
     fetchCalendarMeta(),
     withTimeout(quickGeoForContext(), 8_000, "geo sources").catch(() => ({
+      sources: null,
       feed: [] as Awaited<ReturnType<typeof buildMarketNewsFeed>>,
       war: "",
       trump: null as string | null,
@@ -135,6 +145,9 @@ export async function buildInstrumentBiasContext(
   const session = getMarketSession();
   const tradingSession = getTradingSessionInfo();
   const next = pickNextHighImpact(cal.events);
+  const volatility = computeSessionVolatility(cal.events, geo.sources, {
+    marketOpen: session.isOpen,
+  });
 
   const headlines = filterNewsForInstrument(geo.feed, label, 4).map((h) => h.text);
 
@@ -193,6 +206,7 @@ export async function buildInstrumentBiasContext(
       trump: geo.trump,
       marketsTone: geo.markets,
     },
+    volatility,
     nextRedFolder: next
       ? {
           title: next.title,
@@ -227,6 +241,7 @@ Return ONLY valid JSON:
   "newsImpact": "",
   "newsLine": "",
   "invalidation": "",
+  "volatility": "",
   "overlays": {"draw": false, "fvg": false, "rejection": false, "cisd": false, "session": false, "levels": false}
 }
 
@@ -236,6 +251,12 @@ Rules:
 - newsImpact: short label e.g. "Mixed / slightly gold-supportive"
 - newsLine: one sentence catalyst read from headlines/geo
 - invalidation: e.g. "Hold above 4527" — use JSON keyLevels/drawOnLiquidity
+- volatility: one sentence (max 28 words) on expected session volatility, CENTERED on the red folder timeline and war/geo flow in JSON.volatility.
+  - Red folder: use volatility.redFolder.phase/next/todayEvents. "imminent"/"anticipation" → pre-release compression, liquidity raid of the pre-release range, two-sided spike; "today" → session likely builds around the release; "tomorrow" → anticipation caps follow-through. Name the event and ET time.
+  - War: use volatility.war (intensity, tone, headlines, trumpPosts). Escalation → risk-off spikes (NQ/ES down, gold up); de-escalation → relief squeezes; mixed → whipsaw. Only cite headlines present in JSON.
+  - If both stack, say reactions may overshoot. If regime is "calm", say structure should lead.
+- context: when volatility.regime is "elevated" or "high", the final context sentence must tie the bias to the catalyst timing (e.g. bias likely tested into/after the release) instead of generic confidence.
+- newsImpact/newsLine: weigh volatility.war and the red folder timing above generic headlines.
 - overlays: true ONLY for concepts you reference in headline/context
 ${closed ? "- Markets closed: frame for next open." : ""}
 - Use ONLY JSON facts. Do not invent levels or headlines.`;
@@ -245,7 +266,12 @@ function parseAiResponse(text: string): {
   tradeMapAi: Partial<
     Pick<
       InstrumentTradeMap,
-      "headline" | "context" | "newsImpact" | "newsLine" | "invalidation"
+      | "headline"
+      | "context"
+      | "newsImpact"
+      | "newsLine"
+      | "invalidation"
+      | "volatilityNote"
     >
   > | null;
   overlays: Partial<ChartOverlaySettings> | null;
@@ -261,6 +287,7 @@ function parseAiResponse(text: string): {
       newsImpact?: string;
       newsLine?: string;
       invalidation?: string;
+      volatility?: string;
       line?: string;
       overlays?: unknown;
     };
@@ -279,6 +306,7 @@ function parseAiResponse(text: string): {
         newsImpact: parsed.newsImpact?.trim(),
         newsLine: parsed.newsLine?.trim(),
         invalidation: parsed.invalidation?.trim(),
+        volatilityNote: parsed.volatility?.trim(),
       },
       overlays: parseModelOverlays(parsed.overlays),
     };
@@ -339,7 +367,12 @@ async function generateInstrumentBiasBrief(
     const { text } = await generateText({
       model,
       prompt: buildPrompt(ctx),
-      maxOutputTokens: 260,
+      maxOutputTokens: 380,
+      // Finish (AI or fallback) inside the route's cached-brief timeout so the
+      // result is always cached — otherwise a paid call is discarded and the
+      // next request pays for another.
+      abortSignal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      maxRetries: 1,
     });
     const parsed = parseAiResponse(text);
     const tradeMap = mergeTradeMapWithAi(draft, parsed.tradeMapAi);
@@ -363,7 +396,7 @@ async function generateInstrumentBiasBrief(
 function cacheFor(label: SymbolLabel) {
   const open = unstable_cache(
     () => generateInstrumentBiasBrief(label),
-    [`instrument-bias-v2-${label}-open`],
+    [`instrument-bias-v3-${label}-open`],
     {
       revalidate: BIAS_SUMMARY_REVALIDATE_SEC,
       tags: ["instrument-bias", `instrument-bias-${label}`],
@@ -371,7 +404,7 @@ function cacheFor(label: SymbolLabel) {
   );
   const closed = unstable_cache(
     () => generateInstrumentBiasBrief(label),
-    [`instrument-bias-v2-${label}-closed`],
+    [`instrument-bias-v3-${label}-closed`],
     {
       revalidate: BIAS_SUMMARY_CLOSED_REVALIDATE_SEC,
       tags: ["instrument-bias", `instrument-bias-${label}`],

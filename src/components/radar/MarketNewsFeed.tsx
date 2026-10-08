@@ -113,11 +113,13 @@ export function MarketNewsFeed({
                   <span className={`news-feed-tag ${labelClass(item.label)}`}>
                     {item.label}
                   </span>
-                  {item.topics.map((topic) => (
-                    <span key={topic} className="news-feed-topic">
-                      {topic}
-                    </span>
-                  ))}
+                  {item.topics
+                    .filter((topic) => topic.toUpperCase() !== item.label)
+                    .map((topic) => (
+                      <span key={topic} className="news-feed-topic">
+                        {topic}
+                      </span>
+                    ))}
                 </div>
                 {item.link ? (
                   <a

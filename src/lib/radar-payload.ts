@@ -21,11 +21,14 @@ export type RadarPayload = {
 };
 
 export async function getRadarPayload(): Promise<RadarPayload> {
+  // Start calendar fetch immediately — it's independent of chart data
+  const calPromise = fetchCalendarMeta();
+
   const chartCandles = await loadAllChartCandles();
 
   const [marketsResult, calResult] = await Promise.allSettled([
     computeMarketContextFromCharts(chartCandles),
-    fetchCalendarMeta(),
+    calPromise,
   ]);
 
   const markets =

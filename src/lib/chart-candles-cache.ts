@@ -102,9 +102,8 @@ export function chartCandlesSwrKey(
   return `/api/chart?${params.toString()}`;
 }
 
-/** One fetch serves both 1H and 4H charts. */
+/** 15m for chart display; 60m for market context (1H/4H aggregation & analysis). */
 export const CHART_PREFETCH_SPECS = [
-  { interval: "5m", range: "1mo" },
   { interval: "15m", range: "1mo" },
   { interval: "60m", range: "1y" },
 ] as const;

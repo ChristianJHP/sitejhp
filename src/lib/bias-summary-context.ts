@@ -2,6 +2,12 @@ import { fetchCalendarMeta, pickNextHighImpact } from "@/lib/events";
 import { getMarketSession } from "@/lib/futures-session";
 import { computeMarketContext, type SymbolContext } from "@/lib/htf-status";
 import { shouldShowDrawOnLiquidity } from "@/lib/market-analysis";
+import { withTimeout } from "@/lib/fetch-timeout";
+import { gatherGeopoliticsSources } from "@/lib/geopolitics-sources";
+import {
+  computeSessionVolatility,
+  type SessionVolatilityContext,
+} from "@/lib/session-volatility";
 
 export type IntervalSnapshot = {
   candleColor: string | null;
@@ -55,6 +61,8 @@ export type BiasSummaryMarketContext = {
     minutesUntil: number | null;
   } | null;
   minutesTo1HClose: number | null;
+  /** Red folder timeline + war/geo flow → expected session volatility. */
+  volatility: SessionVolatilityContext;
 };
 
 const EMPTY_INTERVAL: IntervalSnapshot = {
@@ -115,14 +123,20 @@ function watchHints(s: SymbolContext): SymbolWatchHints {
 }
 
 export async function buildBiasSummaryMarketContext(): Promise<BiasSummaryMarketContext> {
-  const [markets, cal] = await Promise.all([
+  const [markets, cal, geoSources] = await Promise.all([
     computeMarketContext(),
     fetchCalendarMeta(),
+    withTimeout(gatherGeopoliticsSources(), 8_000, "geo sources").catch(
+      () => null
+    ),
   ]);
 
   const next = pickNextHighImpact(cal.events);
   const rs = markets.relativeStrength;
   const session = getMarketSession();
+  const volatility = computeSessionVolatility(cal.events, geoSources, {
+    marketOpen: session.isOpen,
+  });
 
   return {
     timezone: "America/New_York",
@@ -163,6 +177,7 @@ export async function buildBiasSummaryMarketContext(): Promise<BiasSummaryMarket
         }
       : null,
     minutesTo1HClose: session.minutesTo1HClose,
+    volatility,
   };
 }
 
