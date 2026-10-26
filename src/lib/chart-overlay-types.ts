@@ -14,7 +14,7 @@ export const CHART_OVERLAY_LABELS: Record<
 > = {
   draw: { label: "Draw on liquidity", short: "Draw" },
   fvg: { label: "Fair value gaps", short: "FVG" },
-  rejection: { label: "Rejection blocks", short: "RB" },
+  rejection: { label: "Rejection blocks", short: "Rejection" },
   cisd: { label: "CISD level", short: "CISD" },
   session: { label: "Current session high & low", short: "Session" },
   levels: { label: "4H / prior highs & lows", short: "Levels" },

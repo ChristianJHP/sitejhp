@@ -2,19 +2,19 @@ import { MarketRadar } from "@/components/radar/MarketRadar";
 import { FeedbackBox } from "@/components/radar/FeedbackBox";
 import { getRadarPayload } from "@/lib/radar-payload";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export default async function BiasPage() {
-  let initialRadar = null;
+  let initialData = null;
   try {
-    initialRadar = await getRadarPayload();
-  } catch (error) {
-    console.error("[bias/page] radar preload failed", error);
+    initialData = await getRadarPayload();
+  } catch {
+    // Fall through — client will fetch via SWR
   }
 
   return (
     <main className="radar-shell">
-      <MarketRadar initialData={initialRadar} />
+      <MarketRadar initialData={initialData} />
       <FeedbackBox />
     </main>
   );

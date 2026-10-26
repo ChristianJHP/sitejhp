@@ -58,7 +58,7 @@ export function MarketRadar({ initialData }: MarketRadarProps) {
     (url: string) => fetch(url).then((r) => r.json()),
     {
       fallbackData: initialData ?? undefined,
-      revalidateOnMount: !initialData?.markets,
+      revalidateOnMount: true,
       refreshInterval: pageVisible ? 30_000 : 0,
       keepPreviousData: true,
       dedupingInterval: 15_000,
@@ -128,6 +128,7 @@ export function MarketRadar({ initialData }: MarketRadarProps) {
                   <span className="live-pulse-dot" aria-hidden />
                 ) : null}
                 <span
+                  suppressHydrationWarning
                   className={
                     tradingSession.isMarketOpen
                       ? "mr-session mr-session--open"

@@ -27,7 +27,7 @@ export type ChartPlotLine = {
   role: ChartPlotLineRole;
 };
 
-export type ChartPlotZoneKind = "fvg" | "rejection";
+export type ChartPlotZoneKind = "fvg" | "rejection" | "draw-range";
 
 export type ChartPlotZone = {
   top: number;
@@ -190,6 +190,7 @@ export function filterChartPlot(
     zones: plot.zones.filter((zone) => {
       if (zone.kind === "fvg") return overlays.fvg;
       if (zone.kind === "rejection") return overlays.rejection;
+      if (zone.kind === "draw-range") return overlays.draw;
       return true;
     }),
   };

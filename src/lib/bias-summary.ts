@@ -46,15 +46,17 @@ The sentence must:
 ${closed
     ? `- State markets are closed (marketSession.reason) and when they reopen (minutesUntilOpen).
 - Summarize last known 1H/4H structure and ES vs NQ from JSON — no live "next hour" action.
-- Mention nextRedFolderEvent if relevant before reopen.`
+- Mention nextRedFolderEvent if relevant before reopen.
+- If volatility.war.intensity is "elevated"/"high", flag reopen gap risk from war headlines.`
     : `- State current 1H/4H color and where price sits vs the nearest 1H or 4H level (from JSON).
 - Mention ES vs NQ strength if not balanced.
 - Note 1H candle close in minutesTo1HClose if relevant.
-- Note nextRedFolderEvent timing if within 6 hours (minutesUntil).
-- Give a brief next-hour lean (grind, chop, test high/low, vol into event) — speculative, not certain.`}
+- Frame the next-hour lean around volatility (JSON.volatility): red folder phase "imminent"/"anticipation" → compression into the release then a two-sided liquidity raid; "today" → session building around the release; war intensity "elevated"/"high" → headline spike/whipsaw risk (escalation = risk-off, de-escalation = relief squeeze).
+- Name the red folder event + ET time when phase is imminent/anticipation/today.
+- If volatility.regime is "calm", give a structure-led lean (grind, chop, test high/low) — speculative, not certain.`}
 
 Rules:
-- Exactly ONE sentence, max 40 words. Plain text.
+- Exactly ONE sentence, max 45 words. Plain text.
 - Use ONLY JSON facts. No chart analysis. Do not invent levels.
 - If data missing, say "insufficient data" for that part only.`;
 }
@@ -97,7 +99,12 @@ export function formatLineDeterministic(ctx: BiasSummaryMarketContext): string {
     const nqPx = ctx.nq.price?.toLocaleString() ?? "?";
     const esPx = ctx.es.price?.toLocaleString() ?? "?";
     const openLabel = formatMinutesUntilOpen(ctx.marketSession.minutesUntilOpen);
-    return `Markets closed (${ctx.marketSession.reason}) — ${openLabel}; last NQ ${nqPx}, ES ${esPx}; ${rs}.`;
+    const gap =
+      ctx.volatility?.war.intensity === "high" ||
+      ctx.volatility?.war.intensity === "elevated"
+        ? "; war headlines raise reopen gap risk"
+        : "";
+    return `Markets closed (${ctx.marketSession.reason}) — ${openLabel}; last NQ ${nqPx}, ES ${esPx}; ${rs}${gap}.`;
   }
 
   const rs = ctx.relativeStrength.headline ?? "Balanced";
@@ -121,6 +128,13 @@ export function formatLineDeterministic(ctx: BiasSummaryMarketContext): string {
   const event = ctx.nextRedFolderEvent;
   if (event?.minutesUntil != null && event.minutesUntil <= 360) {
     timing += `, ${event.title} in ${event.minutesUntil}m`;
+  }
+
+  const phase = ctx.volatility?.redFolder.phase;
+  if (phase === "imminent" || phase === "anticipation") {
+    lean = "compression into the release, then a likely raid of the pre-release range";
+  } else if (ctx.volatility?.war.intensity === "high") {
+    lean = `${lean}; war headlines can spike price through levels`;
   }
 
   return `NQ ${nq}; ES ${es}; ${rs}${timing} — ${lean}.`;
@@ -163,7 +177,7 @@ async function generateBiasSummary(): Promise<BiasSummaryPayload> {
 
 const getCachedBiasSummaryOpen = unstable_cache(
   generateBiasSummary,
-  ["bias-ai-summary-v5-open"],
+  ["bias-ai-summary-v6-open"],
   {
     revalidate: BIAS_SUMMARY_REVALIDATE_SEC,
     tags: ["bias-summary", "bias-summary-open"],
@@ -172,7 +186,7 @@ const getCachedBiasSummaryOpen = unstable_cache(
 
 const getCachedBiasSummaryClosed = unstable_cache(
   generateBiasSummary,
-  ["bias-ai-summary-v5-closed"],
+  ["bias-ai-summary-v6-closed"],
   {
     revalidate: BIAS_SUMMARY_CLOSED_REVALIDATE_SEC,
     tags: ["bias-summary", "bias-summary-closed"],

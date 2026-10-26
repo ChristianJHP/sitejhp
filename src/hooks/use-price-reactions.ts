@@ -58,11 +58,23 @@ export function usePriceReactions(
     const summaryKey = `/api/bias/instrument-summary?symbol=${symbol}`;
     const reactionParam = encodeURIComponent(reaction);
 
-    void mutate(
+    // The fresh brief is rules-only. Never let it replace an AI trade map or
+    // blank the panel on failure — just fold the reaction into the news line.
+    void mutate<InstrumentSummaryPayload>(
       summaryKey,
-      summaryFetcher(
-        `${summaryKey}&fresh=1&reaction=${reactionParam}`
-      ).catch(() => undefined),
+      async (current) => {
+        const fresh = await summaryFetcher(
+          `${summaryKey}&fresh=1&reaction=${reactionParam}`
+        ).catch(() => null);
+        if (!fresh?.tradeMap) return current;
+        if (current?.tradeMap && current.source === "ai") {
+          return {
+            ...current,
+            tradeMap: { ...current.tradeMap, newsLine: fresh.tradeMap.newsLine },
+          };
+        }
+        return fresh;
+      },
       { revalidate: false }
     ).finally(() => {
       window.setTimeout(() => setLiveReaction(null), 12_000);

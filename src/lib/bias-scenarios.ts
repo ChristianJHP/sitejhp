@@ -46,6 +46,7 @@ Rules:
 - Exactly ${MAX_EACH} bullish and ${MAX_EACH} bearish scenarios.
 - Each "if" is a condition (level break, red-folder outcome, headline theme). Each "then" is what could happen — speculative, not certain.
 - Use only prices/levels from JSON. Use red-folder events from upcomingRedFolderEvents or nextRedFolderEvent. Headlines may inform macro outcome wording only.
+- Center scenarios on JSON.volatility: when redFolder.phase is "imminent", "anticipation" or "today", at least one scenario per side must hinge on that release (hot vs soft print, or a raid of the pre-release range). When war.intensity is "elevated"/"high", one scenario must hinge on war escalation vs de-escalation (use only war.headlines/trumpPosts themes).
 ${closed ? "- Markets are closed: frame scenarios for the next session open / upcoming events, not live intraday action.\n" : ""}- Frame as conditional: "If X … then Y could …" — never state direction as fact.
 - Max 22 words per "if" and per "then". Plain text. No markdown.
 - Do not repeat the same trigger on both sides.`;
@@ -180,7 +181,7 @@ async function generateBiasScenarios(): Promise<BiasScenariosPayload> {
 
 const getCachedBiasScenariosOpen = unstable_cache(
   generateBiasScenarios,
-  ["bias-ai-scenarios-v2-open"],
+  ["bias-ai-scenarios-v3-open"],
   {
     revalidate: BIAS_SUMMARY_REVALIDATE_SEC,
     tags: ["bias-scenarios", "bias-scenarios-open"],
@@ -189,7 +190,7 @@ const getCachedBiasScenariosOpen = unstable_cache(
 
 const getCachedBiasScenariosClosed = unstable_cache(
   generateBiasScenarios,
-  ["bias-ai-scenarios-v2-closed"],
+  ["bias-ai-scenarios-v3-closed"],
   {
     revalidate: BIAS_SUMMARY_CLOSED_REVALIDATE_SEC,
     tags: ["bias-scenarios", "bias-scenarios-closed"],

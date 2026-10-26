@@ -97,10 +97,12 @@ function filterUpcomingHighUsd(
 
 async function fetchRedFolderUncached(): Promise<{
   events: EconomicEvent[];
-  source: "forexfactory" | "investing";
+  source: "forexfactory" | "investing" | "none";
 }> {
+  let ffOk = false;
   try {
     const rows = await fetchFfRows();
+    ffOk = true;
     const events = filterUpcomingHighUsd(rows, LOOKOUT_MS);
     const t1 = filterRedFolderT1(events);
     if (t1.length > 0) {
@@ -110,8 +112,16 @@ async function fetchRedFolderUncached(): Promise<{
     console.warn("[calendar] ForexFactory failed:", (e as Error).message);
   }
 
-  const events = await fetchInvestingRedFolder(LOOKOUT_MS);
-  return { events: filterRedFolderT1(events), source: "investing" };
+  // FF only covers this week — Investing looks further ahead. It is often
+  // blocked (403), so a failure here must not take down every consumer:
+  // "no tier-1 events this week" is a normal state after the last release.
+  try {
+    const events = await fetchInvestingRedFolder(LOOKOUT_MS);
+    return { events: filterRedFolderT1(events), source: "investing" };
+  } catch (e) {
+    console.warn("[calendar] Investing failed:", (e as Error).message);
+    return { events: [], source: ffOk ? "forexfactory" : "none" };
+  }
 }
 
 const getCachedRedFolder = unstable_cache(

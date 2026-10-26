@@ -34,7 +34,8 @@ Return ONLY valid JSON: {"items": ["", "", ""]}
 Rules:
 - Exactly 2–3 bullets. Each bullet max 14 words. Plain text, no markdown.
 - What to KEEP AN EYE ON — levels, timing, ES/NQ divergence, red-folder events, draw on liquidity.
-- Use ONLY facts from JSON (prices, drawLevel, fvgNet, distances, smt, nextRedFolderEvent).
+- Use ONLY facts from JSON (prices, drawLevel, fvgNet, distances, smt, nextRedFolderEvent, volatility).
+- If volatility.regime is "elevated"/"high", one bullet must name the volatility driver: the red folder release window (event + ET time, pre-release compression/raid) or the war headline theme (escalation vs de-escalation).
 - No if/then chains. No trade calls. No hype.
 ${closed ? "- Markets closed: focus on levels to watch at reopen and upcoming calendar.\n" : "- Include nearest 4H/1H level if within ~30pt.\n"}
 Examples: "NQ draw 30536 — 131pt overhead", "1H close in 42m", "Employment report Thu 8:30 ET"`;
@@ -139,7 +140,7 @@ async function generateBiasWatch(): Promise<BiasWatchPayload> {
 
 const getCachedBiasWatchOpen = unstable_cache(
   generateBiasWatch,
-  ["bias-ai-watch-v1-open"],
+  ["bias-ai-watch-v2-open"],
   {
     revalidate: BIAS_SUMMARY_REVALIDATE_SEC,
     tags: ["bias-watch", "bias-watch-open"],
@@ -148,7 +149,7 @@ const getCachedBiasWatchOpen = unstable_cache(
 
 const getCachedBiasWatchClosed = unstable_cache(
   generateBiasWatch,
-  ["bias-ai-watch-v1-closed"],
+  ["bias-ai-watch-v2-closed"],
   {
     revalidate: BIAS_SUMMARY_CLOSED_REVALIDATE_SEC,
     tags: ["bias-watch", "bias-watch-closed"],

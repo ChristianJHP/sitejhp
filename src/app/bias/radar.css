@@ -754,3 +754,10 @@
     }
   }
 }
+
+/* Global `overflow-x: hidden` turns html/body into scroll containers, which
+   breaks position: sticky. `clip` prevents sideways scroll without that. */
+html:has(.radar-shell),
+body:has(.radar-shell) {
+  overflow-x: clip;
+}

@@ -17,5 +17,5 @@ export function chartCandlesCacheControl(marketClosed?: boolean): string {
   const sec = closed
     ? CHART_CANDLES_REVALIDATE_CLOSED_SEC
     : CHART_CANDLES_REVALIDATE_OPEN_SEC;
-  return `public, s-maxage=${sec}, max-age=${sec}, stale-while-revalidate=600`;
+  return `public, s-maxage=${sec}, max-age=${sec}, stale-while-revalidate=3600`;
 }
