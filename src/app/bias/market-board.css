@@ -4145,4 +4145,8 @@
       font-size: 0.8125rem;
     }
   }
+
+  .bias-summary-source--fallback {
+    color: #f0c674;
+  }
 }

@@ -13,8 +13,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const VALID: SymbolLabel[] = ["NQ", "ES", "GC"];
-/** Market context (≤18s) + AI (≤12s) + headroom; fallback still fits maxDuration. */
-const CACHED_BRIEF_TIMEOUT_MS = 35_000;
+/** Market context (≤18s) + AI (≤25s) + headroom, inside maxDuration (60s). */
+const CACHED_BRIEF_TIMEOUT_MS = 48_000;
 
 function parseSymbol(raw: string | null): SymbolLabel | null {
   if (raw === "NQ" || raw === "ES" || raw === "GC") return raw;

@@ -18,6 +18,9 @@ export type InstrumentSummaryPayload = {
   revalidateSec?: number;
   overlays?: ChartOverlaySettings;
   tradeMap?: InstrumentTradeMap;
+  /** "ai" when the AI refined the map; "fallback" for the rules-based draft. */
+  source?: "ai" | "fallback";
+  fallbackReason?: string;
 };
 
 type StoredSummary = {
@@ -27,7 +30,7 @@ type StoredSummary = {
 };
 
 function storageKey(symbol: RadarTab) {
-  return `jhp-instrument-bias-v2-${symbol}`;
+  return `jhp-instrument-bias-v3-${symbol}`;
 }
 
 function readStoredSummary(symbol: RadarTab): InstrumentSummaryPayload | undefined {

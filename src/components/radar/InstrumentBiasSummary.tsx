@@ -94,7 +94,17 @@ export function InstrumentBiasSummary({
           {SYMBOL_LABEL[symbol]}
         </span>
         {refreshMeta ? (
-          <span className="bias-summary-timing">{refreshMeta}</span>
+          <span className="bias-summary-timing">
+            {data?.source === "fallback" ? (
+              <span
+                className="bias-summary-source bias-summary-source--fallback"
+                title={data.fallbackReason}
+              >
+                Rules-based · {data.fallbackReason ?? "AI unavailable"} ·{" "}
+              </span>
+            ) : null}
+            {refreshMeta}
+          </span>
         ) : null}
       </header>
 
